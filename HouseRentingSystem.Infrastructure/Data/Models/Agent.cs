@@ -9,12 +9,12 @@
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(ValidationConstants.MaxPhoneNumber)]
+        [MaxLength(ValidationConstants.MaxAgentPhoneNumber)]
         public string PhoneNumber { get; set; }
 
         [ForeignKey(nameof(User))]
         public string UserId { get; set; }
 
-        public IdentityUser User { get; set; }
+        public ApplicationUser User { get; set; }
     }
 }

@@ -1,4 +1,6 @@
-﻿using HouseRentingSystem.Infrastructure.Data.Models;
+﻿using HouseRentingSystem.Infrastructure.Configuration;
+using HouseRentingSystem.Infrastructure.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -9,19 +11,21 @@ using System.Threading.Tasks;
 
 namespace HouseRentingSystem.Infrastructure.Data
 {
-    public class HouseRentingDbContext : IdentityDbContext
+    public class HouseRentingDbContext : IdentityDbContext<ApplicationUser, IdentityRole, string>
     {
         public HouseRentingDbContext(DbContextOptions<HouseRentingDbContext> options)
             :base(options)
-        {
-           
-        }
+        { 
 
-        public DbSet<Agent> Agents { get; init; }
-        public DbSet<Category> Categories { get; init; }
-        public DbSet<House> Houses { get; init; }
+        }
         protected override void OnModelCreating(ModelBuilder builder)
         {
+
+            builder.ApplyConfiguration(new UserConfiguration());
+            builder.ApplyConfiguration(new AgentConfiguration());
+            builder.ApplyConfiguration(new CategoryConfiguration());
+            builder.ApplyConfiguration(new HouseConfiguration());
+
             builder.Entity<House>()
                 .HasOne(x => x.Category)
                 .WithMany(x => x.Houses)
@@ -36,5 +40,10 @@ namespace HouseRentingSystem.Infrastructure.Data
 
             base.OnModelCreating(builder);
         }
+
+        public DbSet<Agent> Agents { get; init; }
+        public DbSet<Category> Categories { get; init; }
+        public DbSet<House> Houses { get; init; }
+
     }
 }

@@ -11,7 +11,7 @@
         public int Id { get; init; }
 
         [Required]
-        [MaxLength(ValidationConstants.NameMaxLength)]
+        [MaxLength(ValidationConstants.CategoryNameMaxLength)]
         public string Name { get; set; }
 
         public IEnumerable<House> Houses  { get; init; }

@@ -1,5 +1,6 @@
 ﻿namespace HouseRentingSystem.Infrastructure.Data.Models
 {
+    using Microsoft.EntityFrameworkCore;
     using System.ComponentModel.DataAnnotations;
     using System.ComponentModel.DataAnnotations.Schema;
     using static HouseRentingSystem.Infrastructure.Constants.ValidationConstants;
@@ -8,22 +9,22 @@
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(MaxTitleLength)]
+        [MaxLength(MaxHouseTitleLength)]
         public string Title { get; set; }
 
         [Required]
-        [MaxLength(MaxAddressLength)]
+        [MaxLength(MaxHouseAddressLength)]
         public string Address { get; set; }
 
         [Required]
-        [MaxLength(MaxDescriptionLength)]
+        [MaxLength(MaxHouseDescriptionLength)]
         public string Description { get; set; }
 
         [Required]
         public string ImageUrl { get; set; }
 
-        [Column(TypeName = "decimal(18,4)")]
-        [Range(typeof(decimal), MinPricePerMonth, MaxPricePerMonth)]
+        [Column(TypeName = "money")]
+        [Precision(18, 2)]
         public decimal PricePerMonth { get; set; }
 
         [ForeignKey(nameof(Category))]
@@ -36,6 +37,8 @@
 
         public Agent Agent { get; set; }
 
-        public string RenterId { get; set; }
+        public string? RenterId { get; set; }
+
+        public bool IsActive { get; set; } = true;
     }
 }

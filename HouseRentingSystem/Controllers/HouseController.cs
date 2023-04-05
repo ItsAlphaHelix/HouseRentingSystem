@@ -19,15 +19,40 @@ namespace HouseRentingSystem.Web.Controllers
             this.houseService = houseService;
         }
 
-        public IActionResult All()
+        public async Task<IActionResult> All([FromQuery] AllHousesQueryViewModel query)
         {
-            return View(new HouseQueryViewModel());
+            var result = await houseService.All(
+                query.Category,
+                query.SearchTerm,
+                query.Sorting,
+                query.CurrentPage,
+                AllHousesQueryViewModel.HousesPerPage);
+
+            query.TotalHousesCount = result.TotalHousesCount;
+            query.Categories = await houseService.AllCategoriesName();
+            query.Houses = result.Houses;
+
+            return View(query);
         }
 
         [Authorize]
-        public IActionResult Mine()
+        public async Task<IActionResult> Mine()
         {
-            return View(new HouseQueryViewModel());
+
+            IEnumerable<HouseServiceViewModel> myHhouses;
+            var userId = User.Id();
+
+            if (await agentService.ExistsById(userId))
+            {
+                int agentId = await agentService.GetAgentId(userId);
+                myHhouses = await houseService.AllHousesByAgentId(agentId);
+            }
+            else
+            {
+                myHhouses = await houseService.AllHousesByUserId(userId);
+            }
+
+            return View(myHhouses);
         }
 
 
@@ -71,17 +96,27 @@ namespace HouseRentingSystem.Web.Controllers
 
             int id = await houseService.Create(model, agentId);
 
-            //redirect to details when its implemented
-            return RedirectToAction(nameof(HomeController.Index), new { id = id, information = model.GetInformation() });
+            return RedirectToAction(nameof(Details), new { id = id, information = model.GetInformation() });
         }
 
-        //[Authorize]
-        //[HttpPost]
+        public async Task<IActionResult> Details(int id)
+        {
+            if ((await houseService.IsHouseExists(id)) == false)
+            {
+                return RedirectToAction(nameof(All));
+            }
 
-        //public IActionResult Add(HouseFormModel model)
-        //{
-        //    return RedirectToAction(nameof(Details), new { id = "1" });
-        //}
+            var model = await houseService.HouseDetailsById(id);
+
+            if (await this.houseService.IsHouseExists(id) == false)
+            {
+                TempData["ErrorMessage"] = "Don't touch my slug!";
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            return View(model);
+        }
 
         [Authorize]
         public IActionResult Edit()

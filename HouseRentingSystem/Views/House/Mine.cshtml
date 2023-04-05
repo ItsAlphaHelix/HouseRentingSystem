@@ -1,0 +1,20 @@
+﻿@using HouseRentingSystem.Core.ViewModels.Houses
+@model IEnumerable<HouseServiceViewModel>
+
+@{
+	ViewData["Title"] = "My Houses";
+}
+
+<h2 class="text-center">@ViewData["Title"]</h2>
+
+@if (!Model.Any())
+{
+	<h2 class="text-center">You have no houses yet!</h2>
+}
+
+<div class="row">
+	@foreach (var house in Model)
+	{
+		<partial name="_HousePartial" model="@house" />
+	}
+</div>

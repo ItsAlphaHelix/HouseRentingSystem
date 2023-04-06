@@ -1,21 +1,26 @@
 ﻿namespace HouseRentingSystem.Core.Services
 {
 	using HouseRentingSystem.Core.Contracts;
-	using HouseRentingSystem.Core.ViewModels.Houses;
+    using HouseRentingSystem.Core.Exceptions;
+    using HouseRentingSystem.Core.ViewModels.Houses;
 	using HouseRentingSystem.Infrastructure.Data.Models;
 	using HouseRentingSystem.Infrastructure.Data.Repositories;
 	using Microsoft.EntityFrameworkCore;
 	using Microsoft.Extensions.Logging;
+    using System;
 
 	public class HouseService : IHouseService
 	{
 		private readonly IRepository repository;
-		private readonly ILogger<HouseService> logger;
-
-		public HouseService(IRepository repository, ILogger<HouseService> logger)
+		private readonly ILogger logger;
+        private readonly IGuard guard;
+        public HouseService(IRepository repository,
+            ILogger<HouseService> logger,
+            IGuard guard)
 		{
             this.repository = repository;
 			this.logger = logger;
+            this.guard = guard;
 		}
 
 		public async Task<HouseQueryViewModel> All(
@@ -161,6 +166,56 @@
             return house.Id;
         }
 
+        public async Task Delete(int houseId)
+        {
+            var house = await this.repository.GetByIdAsync<House>(houseId);
+            house.IsActive = false;
+
+            await this.repository.SaveChangesAsync();
+        }
+
+        public async Task EditHouse(int houseId, HouseFormViewModel houseModel)
+        {
+            var house = await repository.GetByIdAsync<House>(houseId);
+
+            if (house == null)
+            {
+                throw new ArgumentException("The house can not be null!");
+            }
+
+            house.Title = houseModel.Title;
+            house.Address = houseModel.Address;
+            house.Description = houseModel.Description;
+            house.ImageUrl = houseModel.ImageUrl;
+            house.PricePerMonth = houseModel.PricePerMonth;
+            house.CategoryId = houseModel.CategoryId;
+
+            await this.repository.SaveChangesAsync();
+        }
+
+        public async Task<int> GetHouseCategoryId(int houseId)
+        {
+            return (await repository.GetByIdAsync<House>(houseId)).CategoryId;
+        }
+
+        public async Task<bool> HasAgentWithId(int houseId, string currentUserId)
+        {
+            bool result = false;
+
+            var house = await this.repository.AllReadonly<House>()
+                .Where(h => h.IsActive)
+                .Where(h => h.Id == houseId)
+                .Include(h => h.Agent)
+                .FirstOrDefaultAsync();
+
+            if (house?.Agent != null && house.Agent.UserId == currentUserId)
+            {
+                result = true;
+            }
+
+            return result;
+        }
+
         public async Task<HouseDetailsModel> HouseDetailsById(int id)
         {
             return await repository.AllReadonly<House>()
@@ -192,6 +247,27 @@
                 .AnyAsync(h => h.Id == id && h.IsActive == true);
         }
 
+        public async Task<bool> IsRented(int houseId)
+        {
+            return (await this.repository.GetByIdAsync<House>(houseId)).RenterId != null;
+        }
+
+        public async Task<bool> IsRentedByUserId(int houseId, string userId)
+        {
+            bool result = false;
+            var house = await repository.AllReadonly<House>()
+                .Where(h => h.IsActive)
+                .Where(h => h.Id == houseId)
+                .FirstOrDefaultAsync();
+
+            if (house != null && house.RenterId == userId)
+            {
+                result = true;
+            }
+
+            return result;
+        }
+
         public async Task<IEnumerable<HouseServiceViewModel>> LastThreeHouses()
 		{
 			var lastThreeHouses = await this.repository.AllReadonly<House>()
@@ -208,5 +284,29 @@
 
 			return lastThreeHouses;
 		}
-	}
+
+        public async Task Leave(int houseId)
+        {
+            var house = await repository.GetByIdAsync<House>(houseId);
+            guard.AgainstNull(house, "House can not be found");
+            house.RenterId = null;
+
+            await this.repository.SaveChangesAsync();
+        }
+
+        public async Task Rent(int houseId, string userId)
+        {
+            var house = await this.repository.GetByIdAsync<House>(houseId);
+
+            if (house != null && house.RenterId != null)
+            {
+                throw new ArgumentException("House is already rented");
+            }
+
+            guard.AgainstNull(house, "House can not be found");
+            house.RenterId = userId;
+
+            await repository.SaveChangesAsync();
+        }
+    }
 }

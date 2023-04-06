@@ -27,5 +27,21 @@ namespace HouseRentingSystem.Core.Contracts
 		Task<bool> IsHouseExists(int id);
 
 		Task<HouseDetailsModel> HouseDetailsById(int id);
+
+		Task EditHouse(int houseId, HouseFormViewModel houseModel);
+
+		Task<bool> HasAgentWithId(int houseId, string currentUserId);
+
+		Task<int> GetHouseCategoryId(int houseId);
+
+		Task Delete(int houseId);
+
+		Task<bool> IsRented(int houseId);
+
+		Task<bool> IsRentedByUserId(int houseId, string userId);
+
+		Task Rent(int houseId, string userId);
+
+		Task Leave(int houseId);
     }
 }

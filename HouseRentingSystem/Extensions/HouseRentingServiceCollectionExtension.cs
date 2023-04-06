@@ -1,4 +1,5 @@
 ﻿using HouseRentingSystem.Core.Contracts;
+using HouseRentingSystem.Core.Exceptions;
 using HouseRentingSystem.Core.Services;
 using HouseRentingSystem.Infrastructure.Data.Repositories;
 
@@ -11,6 +12,7 @@ namespace HouseRentingSystem.Web.Extensions
             services.AddScoped<IRepository, Repository>();
             services.AddScoped<IHouseService, HouseService>();
             services.AddScoped<IAgentService, AgentsService>();
+            services.AddScoped<IGuard, Guard>();
 
             return services;
         }
